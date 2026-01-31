@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 (Final)</title>
+    <title>토스 환율 스캘퍼 Pro+ (AI 이슈 체크)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        .gradient-bg { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .card-shadow { box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.2); }
+        .gradient-bg { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); }
+        .card-shadow { box-shadow: 0 10px 30px -10px rgba(30, 64, 175, 0.2); }
         
         .price-input {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -26,29 +25,59 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
         }
 
+        /* Sentiment Buttons Style */
+        .sent-btn { 
+            @apply flex-1 py-2.5 rounded-xl text-[11px] font-black border transition-all flex flex-col items-center gap-1;
+            background: white;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+        }
+        .sent-btn i { @apply text-xs opacity-50; }
+
+        /* Active States */
+        .sent-btn.active-up { 
+            background: #ef4444; color: white; border-color: #ef4444; 
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        .sent-btn.active-up i { opacity: 1; }
+
+        .sent-btn.active-down { 
+            background: #3b82f6; color: white; border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .sent-btn.active-down i { opacity: 1; }
+
+        .sent-btn.active-flat { 
+            background: #64748b; color: white; border-color: #64748b;
+        }
+        .sent-btn.active-flat i { opacity: 1; }
+
         .result-enter { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        /* AI Pulse Animation */
+        .ai-pulse { animation: pulse-blue 2s infinite; }
+        @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-10">
 
     <div class="max-w-md mx-auto min-h-screen bg-white shadow-2xl md:min-h-0 md:rounded-[2rem] md:my-8 md:border md:border-slate-100 overflow-hidden relative">
         
-        <!-- Top Navigation -->
+        <!-- Header -->
         <div class="gradient-bg p-6 pb-8 text-white rounded-b-[2.5rem] shadow-lg relative z-10">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight"><i class="fas fa-chart-network mr-2 opacity-80"></i>토스 스캘퍼 Pro</h1>
-                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">선행지표 분석 & 마진 트레이딩</p>
+                    <h1 class="text-2xl font-black tracking-tight"><i class="fas fa-brain mr-2 opacity-80 text-yellow-300"></i>토스 스캘퍼 Pro+</h1>
+                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">AI 이슈 자동 분석 시스템</p>
                 </div>
-                <!-- Settings Button (For API Key) -->
                 <button onclick="toggleSettings()" class="bg-white/10 backdrop-blur-md w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
                     <i class="fas fa-cog text-white"></i>
                 </button>
             </div>
 
             <!-- Currency Selector -->
-            <div class="flex p-1 bg-blue-800/50 rounded-xl backdrop-blur-sm border border-white/10">
+            <div class="flex p-1 bg-blue-900/50 rounded-xl backdrop-blur-sm border border-white/10">
                 <button onclick="setCurrency('usd')" id="btn-usd" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm">
                     미국 달러 (USD)
                 </button>
@@ -58,491 +87,390 @@
             </div>
         </div>
 
-        <!-- ⚙️ API Key Settings Section (Hidden by Default) -->
+        <!-- ⚙️ Settings Section -->
         <div id="settings-area" class="hidden px-6 -mt-6 relative z-30 mb-4 result-enter">
             <div class="bg-slate-800 text-white rounded-2xl p-5 shadow-2xl border border-slate-700">
-                <h3 class="text-xs font-bold text-slate-400 mb-2 flex items-center">
-                    <i class="fas fa-key mr-2 text-yellow-400"></i>AI API Key 설정
-                </h3>
+                <h3 class="text-xs font-bold text-slate-400 mb-2 flex items-center"><i class="fas fa-key mr-2"></i>AI API Key 설정</h3>
                 <div class="flex gap-2 mb-2">
-                    <input type="password" id="api-key-input" placeholder="AI Studio 키 붙여넣기" 
-                        class="flex-1 bg-slate-700 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none focus:border-blue-500">
-                    <button onclick="saveApiKey()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-lg font-bold hover:bg-blue-500">저장</button>
+                    <input type="password" id="api-key-input" placeholder="Gemini API 키 입력" class="flex-1 bg-slate-700 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none">
+                    <button onclick="saveApiKey()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-lg font-bold">저장</button>
                 </div>
-                <div class="flex justify-between items-center">
-                    <p id="key-status" class="text-[10px] text-slate-400">키가 저장되지 않았습니다.</p>
-                    <button onclick="deleteApiKey()" class="text-[10px] text-red-400 underline hover:text-red-300">키 삭제</button>
-                </div>
+                <p id="key-status" class="text-[9px] text-slate-500">키를 입력해야 AI 이슈 체크가 가능합니다.</p>
             </div>
         </div>
 
-        <!-- 🔥 Market Indicators Section (Static Dashboard) -->
-        <div class="px-6 -mt-6 relative z-20 mb-6 transition-all duration-300" id="main-content">
-            <div class="bg-white rounded-2xl p-5 card-shadow border border-slate-100">
-                <h3 class="text-xs font-bold text-slate-500 mb-3 flex items-center">
-                    <i class="fas fa-globe-americas text-blue-500 mr-1"></i> 핵심 선행 지표 (먼저 확인하세요)
-                </h3>
-                <div class="space-y-3">
-                    <!-- DXY Card -->
-                    <div id="card-indicator-dxy" class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-xs">DXY</div>
-                            <div>
-                                <div class="text-xs font-bold text-slate-700">달러 인덱스</div>
-                                <div class="text-[10px] text-slate-400">상승 시 달러/원 ↑</div>
-                            </div>
+        <!-- 🔥 Step 1: Fundamental Sentiment -->
+        <div class="px-6 -mt-6 relative z-20 mb-6" id="main-content">
+            <div class="bg-white rounded-2xl p-5 card-shadow border border-slate-100 ring-2 ring-blue-500/5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-black text-slate-600 flex items-center">
+                        <i class="fas fa-newspaper text-blue-500 mr-2"></i>STEP 1. 시장 심리 가중치
+                    </h3>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[9px] font-black text-orange-500 uppercase">Volatility Mode</span>
+                        <input type="checkbox" id="vol-mode" class="w-4 h-4 accent-orange-500 cursor-pointer">
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- DXY Sentiment -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="text-[11px] font-bold text-slate-500"><i class="fas fa-chart-line mr-1 text-green-500"></i>달러 인덱스 (DXY) 추세</span>
+                            <a href="https://kr.investing.com/currencies/us-dollar-index" target="_blank" class="text-[9px] text-blue-400 font-bold underline">실시간 차트</a>
                         </div>
-                        <a href="https://kr.investing.com/currencies/us-dollar-index" target="_blank" class="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded font-bold text-blue-500 hover:bg-blue-50">차트보기</a>
+                        <div class="flex gap-1.5" id="ctrl-dxy">
+                            <button onclick="setBias('dxy', 'up')" class="sent-btn" id="dxy-up">
+                                <i class="fas fa-arrow-up"></i>강세(빨강)
+                            </button>
+                            <button onclick="setBias('dxy', 'flat')" class="sent-btn active-neutral" id="dxy-flat">
+                                <i class="fas fa-minus"></i>보합
+                            </button>
+                            <button onclick="setBias('dxy', 'down')" class="sent-btn" id="dxy-down">
+                                <i class="fas fa-arrow-down"></i>약세(파랑)
+                            </button>
+                        </div>
                     </div>
                     
-                    <!-- USD/JPY Card -->
-                    <div id="card-indicator-jpy" class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xs">JPY</div>
-                            <div>
-                                <div class="text-xs font-bold text-slate-700">엔/달러 환율</div>
-                                <div class="text-[10px] text-slate-400">상승 시 엔/원 ↓ (반대)</div>
-                            </div>
+                    <!-- USD/JPY Sentiment (JPY tab only) -->
+                    <div id="row-usdjpy" class="hidden flex flex-col gap-2 border-t pt-3 border-slate-50">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="text-[11px] font-bold text-slate-500"><i class="fas fa-coins mr-1 text-purple-500"></i>엔/달러 (USD/JPY) 추세</span>
+                            <a href="https://kr.investing.com/currencies/usd-jpy" target="_blank" class="text-[9px] text-blue-400 font-bold underline">실시간 차트</a>
                         </div>
-                        <a href="https://kr.investing.com/currencies/usd-jpy" target="_blank" class="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded font-bold text-blue-500 hover:bg-blue-50">차트보기</a>
+                        <div class="flex gap-1.5" id="ctrl-usdjpy">
+                            <button onclick="setBias('usdjpy', 'up')" class="sent-btn" id="usdjpy-up">
+                                <i class="fas fa-arrow-up"></i>엔저(상승)
+                            </button>
+                            <button onclick="setBias('usdjpy', 'flat')" class="sent-btn active-neutral" id="usdjpy-flat">
+                                <i class="fas fa-minus"></i>보합
+                            </button>
+                            <button onclick="setBias('usdjpy', 'down')" class="sent-btn" id="usdjpy-down">
+                                <i class="fas fa-arrow-down"></i>엔고(하락)
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- US 10Y Bond -->
-                    <div id="card-indicator-bond" class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs">10Y</div>
-                            <div>
-                                <div class="text-xs font-bold text-slate-700">미국 10년물 국채</div>
-                                <div class="text-[10px] text-slate-400">상승 시 달러 강세</div>
-                            </div>
+                    <!-- AI Auto Check Section -->
+                    <div class="pt-2 border-t border-slate-50">
+                        <button onclick="autoCheckNews()" class="ai-pulse w-full bg-blue-50 text-blue-600 py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:bg-blue-100 transition-all">
+                            <i class="fas fa-magic"></i> ✨ AI 실시간 이슈 체크 (자동)
+                        </button>
+                        <div id="news-loading" class="hidden mt-2 text-center py-2">
+                             <i class="fas fa-circle-notch fa-spin text-blue-400 mr-2"></i><span class="text-[10px] text-slate-400 font-bold">최신 뉴스를 분석 중입니다...</span>
                         </div>
-                        <a href="https://kr.investing.com/rates-bonds/u.s.-10-year-bond-yield" target="_blank" class="text-[10px] bg-white border border-slate-200 px-2 py-1 rounded font-bold text-blue-500 hover:bg-blue-50">차트보기</a>
+                        <textarea id="news-context" rows="2" class="w-full mt-2 bg-slate-50 text-[11px] p-3 rounded-xl border border-slate-100 outline-none focus:border-blue-300 font-medium leading-relaxed" 
+                            placeholder="AI가 분석한 시장 핵심 이슈가 여기에 표시됩니다."></textarea>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Input Section -->
-        <div class="px-6 relative z-20">
+        <!-- Step 2: Price Input -->
+        <div class="px-6 relative z-20 mb-8">
             <div class="bg-white rounded-2xl p-6 card-shadow border border-slate-100">
-                <label class="block text-xs font-bold text-slate-500 mb-2 ml-1">현재 토스뱅크 가격 입력</label>
+                <div class="flex justify-between items-center mb-2 ml-1">
+                    <label class="text-xs font-black text-slate-600 uppercase tracking-wide">STEP 2. 현재 토스뱅크 가격</label>
+                </div>
                 <div class="relative">
                     <input type="number" inputmode="decimal" id="price-input" 
-                        class="price-input w-full text-3xl font-black text-slate-800 p-4 pr-12 rounded-xl border border-slate-200 outline-none focus:border-blue-500 placeholder-slate-200"
+                        class="price-input w-full text-4xl font-black text-slate-800 p-4 pr-12 rounded-2xl border-2 border-slate-100 outline-none focus:border-blue-500 placeholder-slate-200"
                         placeholder="0">
                     <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">원</span>
                 </div>
                 
-                <button onclick="analyzePrice()" class="w-full mt-4 bg-slate-800 text-white font-bold py-3.5 rounded-xl hover:bg-slate-700 active:scale-[0.98] transition shadow-lg flex justify-center items-center gap-2">
-                    <i class="fas fa-search-dollar"></i> 수익 구간 분석
+                <button onclick="analyzePrice()" class="w-full mt-5 bg-blue-700 text-white font-black py-4 rounded-2xl hover:bg-blue-800 active:scale-[0.98] transition shadow-xl flex justify-center items-center gap-3 text-lg">
+                    <i class="fas fa-bolt text-yellow-300"></i> 마진 타격 분석
                 </button>
             </div>
         </div>
 
         <!-- Analysis Result Section -->
-        <div id="result-area" class="hidden px-6 mt-6 space-y-5 pb-8">
-            
-            <!-- 1. Verdict Card -->
-            <div class="result-enter" style="animation-delay: 0.1s">
+        <div id="result-area" class="hidden px-6 mt-2 space-y-6 pb-12">
+            <!-- Verdict -->
+            <div class="result-enter">
                 <div class="bg-white border border-slate-100 rounded-2xl p-5 card-shadow relative overflow-hidden">
                     <div id="verdict-bg" class="absolute top-0 left-0 w-2 h-full bg-slate-400"></div>
                     <div class="flex justify-between items-start pl-3">
                         <div>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">AI Technical Verdict</p>
-                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800">관망 (Wait)</h2>
-                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium">데이터 분석 대기 중...</p>
-                        </div>
-                        <div id="verdict-icon" class="text-4xl text-slate-200">
-                            <i class="fas fa-pause-circle"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Target Prices (Scalping) -->
-            <div class="result-enter" style="animation-delay: 0.2s">
-                <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center justify-between">
-                    <span><i class="fas fa-bullseye text-blue-500 mr-2"></i>스캘핑 목표가 (단타)</span>
-                    <span class="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">수익 극대화 보정됨</span>
-                </h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <span class="text-xs font-bold text-blue-400 block mb-1">매수 추천가 (Entry)</span>
-                        <div id="target-entry" class="text-xl font-black text-blue-600">---</div>
-                        <div id="entry-gap" class="text-[10px] text-blue-400 font-medium mt-1">현재가 대비 -0.0원</div>
-                    </div>
-                    <div class="bg-red-50 p-4 rounded-xl border border-red-100">
-                        <span class="text-xs font-bold text-red-400 block mb-1">매도 목표가 (Exit)</span>
-                        <div id="target-exit" class="text-xl font-black text-red-600">---</div>
-                        <div id="profit-calc" class="text-[10px] text-red-400 font-medium mt-1">예상 수익 +0.0원</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Technical Indicators -->
-            <div class="result-enter" style="animation-delay: 0.3s">
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-xs font-bold text-slate-500">주요 기술적 지표 (Daily)</h3>
-                        <span class="text-[10px] bg-white px-2 py-1 rounded border text-slate-400">Investing.com Logic</span>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500 font-medium">RSI (14)</span>
-                            <div class="flex items-center gap-3 w-1/2 justify-end">
-                                <div class="w-24 h-2 bg-slate-200 rounded-full overflow-hidden relative">
-                                    <div id="rsi-bar" class="h-full bg-slate-400 rounded-full" style="width: 50%"></div>
-                                </div>
-                                <span id="rsi-val" class="font-bold text-slate-700 w-8 text-right">--</span>
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">AI Expert Verdict</p>
+                                <span id="vol-badge" class="hidden text-[9px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 font-black tracking-tighter">변동성 모드</span>
                             </div>
+                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800 tracking-tighter">데이터 분석 중...</h2>
+                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium leading-tight">선행 지표의 가중치를 계산하고 있습니다.</p>
                         </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500 font-medium">Pivot Point</span>
-                            <span id="pivot-val" class="font-bold text-slate-700">---</span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500 font-medium">이동평균 (5일)</span>
-                            <span id="ma5-val" class="font-bold text-slate-700">---</span>
-                        </div>
+                        <div id="verdict-icon" class="text-4xl"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Gemini Analyst Comment -->
-            <div class="result-enter" style="animation-delay: 0.4s">
-                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-5 border border-indigo-100 relative">
-                    <div class="absolute top-4 right-4 text-indigo-200">
-                        <i class="fas fa-robot text-2xl"></i>
+            <!-- Scalping Targets -->
+            <div class="result-enter" style="animation-delay: 0.1s">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 relative overflow-hidden">
+                        <span class="text-xs font-black text-blue-400 block mb-1">매수 진입가</span>
+                        <div id="target-entry" class="text-2xl font-black text-blue-700">---</div>
+                        <div id="entry-gap" class="text-[10px] text-blue-400 font-bold mt-1">---</div>
                     </div>
-                    <h3 class="text-sm font-bold text-indigo-900 mb-2">AI 애널리스트 코멘트</h3>
-                    <div id="ai-comment" class="text-sm text-indigo-800 leading-relaxed font-medium">
-                        (분석 버튼을 누르면 AI가 전략을 브리핑합니다)
+                    <div class="bg-red-50 p-4 rounded-2xl border border-red-100 relative overflow-hidden">
+                        <span class="text-xs font-black text-red-400 block mb-1">매도 목표가</span>
+                        <div id="target-exit" class="text-2xl font-black text-red-700">---</div>
+                        <div id="profit-calc" class="text-[10px] text-red-400 font-bold mt-1">---</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Commentary -->
+            <div class="result-enter" style="animation-delay: 0.2s">
+                <div class="bg-slate-900 rounded-2xl p-6 border border-slate-700 shadow-2xl relative">
+                    <div class="absolute top-4 right-5 text-blue-400/20">
+                        <i class="fas fa-robot text-3xl"></i>
+                    </div>
+                    <h3 class="text-xs font-bold text-blue-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> AI Analyst Briefing
+                    </h3>
+                    <div id="ai-comment" class="text-sm text-slate-200 leading-relaxed font-medium">
+                        분석 버튼을 눌러주세요.
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-            <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-            <p class="text-blue-600 font-bold text-sm animate-pulse">수익 구간 시뮬레이션 중...</p>
+        <!-- Loader -->
+        <div id="loading-overlay" class="hidden absolute inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
+            <div class="w-16 h-16 relative">
+                <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <p class="mt-6 text-blue-800 font-black text-sm tracking-widest animate-pulse uppercase">Calculating Strategy...</p>
         </div>
 
     </div>
 
     <script>
-        // --- Configuration ---
-        // 🔑 중요: GitHub에 올릴 때는 아래 apiKey는 꼭 비워두세요. (설정 메뉴에서 입력)
-        const apiKey = ""; 
+        // --- Configuration & State ---
         const HISTORY_API = 'https://api.frankfurter.app';
-
         let currentCurrency = 'usd';
         let historicalData = { usd: [], jpy: [] };
+        let macroBias = { dxy: 'flat', usdjpy: 'flat' };
 
-        // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
             fetchHistoricalData();
             setCurrency('usd'); 
             
-            // Check for saved API key on load
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
-                document.getElementById('key-status').innerText = "✅ 키가 저장되어 있습니다.";
-                document.getElementById('key-status').className = "text-[10px] text-green-400";
+                document.getElementById('key-status').innerText = "✅ API 키 연결 완료. 모든 기능을 사용할 수 있습니다.";
+                document.getElementById('key-status').classList.replace('text-slate-500', 'text-green-400');
             }
-
-            document.getElementById('price-input').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') analyzePrice();
-            });
         });
 
-        // --- Settings / API Key Logic ---
+        // --- Core UI Functions ---
+        function setCurrency(curr) {
+            currentCurrency = curr;
+            const btnUsd = document.getElementById('btn-usd');
+            const btnJpy = document.getElementById('btn-jpy');
+            const rowJpy = document.getElementById('row-usdjpy');
+            
+            if (curr === 'usd') {
+                btnUsd.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm';
+                btnJpy.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
+                rowJpy.classList.add('hidden');
+            } else {
+                btnUsd.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
+                btnJpy.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm';
+                rowJpy.classList.remove('hidden');
+            }
+            document.getElementById('result-area').classList.add('hidden');
+        }
+
+        function setBias(type, dir) {
+            macroBias[type] = dir;
+            const container = document.getElementById(`ctrl-${type}`);
+            const btns = container.querySelectorAll('button');
+            
+            btns.forEach(btn => btn.className = "sent-btn");
+            
+            if (dir === 'up') btns[0].classList.add('active-up');
+            else if (dir === 'flat') btns[1].classList.add('active-flat');
+            else if (dir === 'down') btns[2].classList.add('active-down');
+        }
+
+        async function autoCheckNews() {
+            const key = localStorage.getItem('gemini_api_key');
+            if (!key) { alert("⚙️ 상단 설정에서 API 키를 먼저 등록해주세요."); return; }
+
+            const loader = document.getElementById('news-loading');
+            const newsArea = document.getElementById('news-context');
+            loader.classList.remove('hidden');
+
+            const prompt = `
+                Act as a professional FX analyst for a Korean Toss Bank user. 
+                Search and analyze the LATEST economic news for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}.
+                Provide a 2-sentence summary in Korean focusing on what is happening RIGHT NOW.
+                Then, suggest if the sentiment is 'Strong', 'Neutral', or 'Weak'.
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }],
+                        tools: [{ "google_search": {} }]
+                    })
+                });
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                newsArea.value = text.trim();
+                
+                // Smart sentiment detection (Auto-toggle buttons)
+                if(text.includes('강세') || text.includes('상승')) setBias('dxy', 'up');
+                else if(text.includes('약세') || text.includes('하락')) setBias('dxy', 'down');
+                else setBias('dxy', 'flat');
+
+            } catch (e) {
+                newsArea.value = "이슈 체크 실패. 네트워크 또는 키 설정을 확인하세요.";
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
         function toggleSettings() {
             const area = document.getElementById('settings-area');
-            const main = document.getElementById('main-content');
-            
-            if (area.classList.contains('hidden')) {
-                area.classList.remove('hidden');
-                main.style.marginTop = '0'; // Adjust overlap
-            } else {
-                area.classList.add('hidden');
-                main.style.marginTop = '-1.5rem'; // Restore overlap
-            }
+            area.classList.toggle('hidden');
         }
 
         function saveApiKey() {
             const key = document.getElementById('api-key-input').value.trim();
             if (key) {
                 localStorage.setItem('gemini_api_key', key);
-                document.getElementById('key-status').innerText = "✅ 키가 저장되었습니다!";
-                document.getElementById('key-status').className = "text-[10px] text-green-400";
-                document.getElementById('api-key-input').value = "";
-                alert("API 키가 저장되었습니다. 이제 AI 분석이 작동합니다.");
-                toggleSettings();
-            } else {
-                alert("키를 입력해주세요.");
+                location.reload();
             }
-        }
-
-        function deleteApiKey() {
-            localStorage.removeItem('gemini_api_key');
-            document.getElementById('key-status').innerText = "키가 삭제되었습니다.";
-            document.getElementById('key-status').className = "text-[10px] text-red-400";
-            alert("저장된 키가 삭제되었습니다.");
-        }
-
-        // --- Basic UI Logic ---
-        function setCurrency(curr) {
-            currentCurrency = curr;
-            const btnUsd = document.getElementById('btn-usd');
-            const btnJpy = document.getElementById('btn-jpy');
-            const input = document.getElementById('price-input');
-            
-            // Indicator Cards
-            const cardDxy = document.getElementById('card-indicator-dxy');
-            const cardJpy = document.getElementById('card-indicator-jpy');
-            const cardBond = document.getElementById('card-indicator-bond');
-            
-            if (curr === 'usd') {
-                btnUsd.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm';
-                btnJpy.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
-                input.placeholder = "예: 1450";
-                
-                // USD Mode: Show DXY & Bond, Hide JPY
-                if(cardDxy) cardDxy.classList.remove('hidden');
-                if(cardBond) cardBond.classList.remove('hidden');
-                if(cardJpy) cardJpy.classList.add('hidden');
-            } else {
-                btnUsd.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
-                btnJpy.className = 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm';
-                input.placeholder = "예: 930";
-                
-                // JPY Mode: Hide DXY & Bond, Show JPY ONLY
-                if(cardDxy) cardDxy.classList.add('hidden');
-                if(cardBond) cardBond.classList.add('hidden');
-                if(cardJpy) cardJpy.classList.remove('hidden');
-            }
-            
-            document.getElementById('result-area').classList.add('hidden');
-            input.value = '';
-            input.focus();
         }
 
         // --- Data Fetching ---
         async function fetchHistoricalData() {
             try {
-                const end = new Date();
-                const start = new Date();
-                start.setDate(end.getDate() - 40);
-                const startStr = start.toISOString().split('T')[0];
-                
-                const usdRes = await fetch(`${HISTORY_API}/${startStr}..?from=USD&to=KRW`);
+                const startStr = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                const [usdRes, jpyRes] = await Promise.all([
+                    fetch(`${HISTORY_API}/${startStr}..?from=USD&to=KRW`),
+                    fetch(`${HISTORY_API}/${startStr}..?from=JPY&to=KRW`)
+                ]);
                 const usdData = await usdRes.json();
-                
-                const jpyRes = await fetch(`${HISTORY_API}/${startStr}..?from=JPY&to=KRW`);
                 const jpyData = await jpyRes.json();
-
                 historicalData.usd = Object.values(usdData.rates).map(r => r.KRW);
                 historicalData.jpy = Object.values(jpyData.rates).map(r => r.KRW * 100);
-            } catch (e) {
-                console.error("History fetch failed", e);
-            }
+            } catch (e) { console.error("Data error", e); }
         }
 
         // --- Analysis Logic ---
         async function analyzePrice() {
             const inputVal = parseFloat(document.getElementById('price-input').value);
-            if (!inputVal || isNaN(inputVal)) {
-                alert("현재 가격을 입력해주세요.");
-                return;
-            }
+            if (!inputVal) { alert("현재가를 입력하세요."); return; }
 
-            const loader = document.getElementById('loading-overlay');
-            loader.classList.remove('hidden');
-
-            if (historicalData.usd.length === 0) await fetchHistoricalData();
-
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            
             setTimeout(async () => {
                 const history = currentCurrency === 'usd' ? historicalData.usd : historicalData.jpy;
-                const safeHistory = history.length > 0 ? history : [inputVal, inputVal];
+                const tech = calculateTechnicals(inputVal, history);
+                const final = applyFundamentalWeights(tech, inputVal);
                 
-                const result = performTechnicalAnalysis(inputVal, safeHistory);
-                updateUI(result);
+                updateUI(final, inputVal);
                 
                 try {
-                    const aiText = await getGeminiAnalysis(inputVal, result);
-                    document.getElementById('ai-comment').innerHTML = aiText;
+                    const comment = await getGeminiBriefing(inputVal, final);
+                    document.getElementById('ai-comment').innerHTML = comment;
                 } catch (e) {
                     document.getElementById('ai-comment').innerText = e.message;
                 }
 
-                loader.classList.add('hidden');
+                document.getElementById('loading-overlay').classList.add('hidden');
                 document.getElementById('result-area').classList.remove('hidden');
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }, 800);
         }
 
-        function performTechnicalAnalysis(currentPrice, history) {
-            const lastClose = history[history.length - 1];
-            
-            let volatilitySum = 0;
-            const period = Math.min(14, history.length - 1);
-            for(let i = history.length - period; i < history.length; i++) {
-                volatilitySum += Math.abs(history[i] - history[i-1]);
-            }
-            let atr = volatilitySum / period;
-            if (atr < 1) atr = currentCurrency === 'usd' ? 5 : 3;
-
-            const pivot = lastClose; 
-            const r1 = pivot + (atr * 0.8); 
-            const s1 = pivot - (atr * 0.8); 
-            
-            const rsi = calculateRSI(history, 14);
-            const ma5 = history.slice(-5).reduce((a,b)=>a+b, 0) / 5;
-            
-            let verdict = "관망 (Hold)";
-            let color = "gray";
-            let entry = 0, exit = 0;
-
-            if (currentPrice < pivot) {
-                if (rsi < 45 || currentPrice < ma5) {
-                    verdict = "매수 추천 (Buy Dip)";
-                    color = "green";
-                    entry = currentPrice; 
-                    exit = pivot;
-                } else {
-                    verdict = "약세/관망 (Neutral)";
-                    color = "gray";
-                    entry = s1; 
-                    exit = pivot;
+        function calculateTechnicals(price, history) {
+            const last = history[history.length - 1];
+            let volSum = 0;
+            for(let i=14; i>0; i--) volSum += Math.abs(history[history.length-i] - history[history.length-i-1]);
+            let atr = volSum / 14;
+            const rsi = (function(h){
+                let g=0, l=0;
+                for(let i=h.length-14; i<h.length; i++){
+                    let d = h[i]-h[i-1]; d>0?g+=d:l-=d;
                 }
-            } else {
-                if (rsi > 55 || currentPrice > ma5) {
-                    verdict = "매도 추천 (Sell Rally)";
-                    color = "red";
-                    entry = s1; 
-                    exit = currentPrice; 
-                } else {
-                    verdict = "강세/관망 (Neutral)";
-                    color = "gray";
-                    entry = pivot;
-                    exit = r1;
-                }
-            }
-
-            const minProfit = currentCurrency === 'usd' ? 5.5 : 3.5;
-            
-            if (color === 'green') {
-                if (exit - entry < minProfit) exit = entry + Math.max(minProfit, atr);
-            } else if (color === 'red') {
-                if (exit - entry < minProfit) entry = exit - Math.max(minProfit, atr);
-            } else {
-                entry = currentPrice;
-                exit = currentPrice + minProfit;
-            }
-            
-            return { rsi, ma5, pivot, s1, r1, verdict, color, entry, exit, atr, minProfit };
+                let rs = (g/14)/(l/14); return 100-(100/(1+rs));
+            })(history);
+            const ma5 = history.slice(-5).reduce((a,b)=>a+b, 0)/5;
+            return { rsi, pivot: last, ma5, atr };
         }
 
-        function calculateRSI(data, period) {
-            if (data.length < period + 1) return 50; 
-            let gains = 0, losses = 0;
-            for (let i = data.length - period; i < data.length; i++) {
-                const diff = data[i] - data[i - 1];
-                if (diff > 0) gains += diff;
-                else losses -= diff;
+        function applyFundamentalWeights(tech, price) {
+            let bias = 0;
+            const isVolMode = document.getElementById('vol-mode').checked;
+            if (macroBias.dxy === 'up') bias += 1.2;
+            else if (macroBias.dxy === 'down') bias -= 1.2;
+            if (currentCurrency === 'jpy') {
+                if (macroBias.usdjpy === 'up') bias -= 1.8;
+                else if (macroBias.usdjpy === 'down') bias += 1.8;
             }
-            const avgGain = gains / period;
-            const avgLoss = losses / period;
-            const rs = avgGain / avgLoss;
-            return 100 - (100 / (1 + rs));
+            let spread = tech.atr * (isVolMode ? 1.8 : 0.8);
+            let entry = tech.pivot - (spread * 0.5) + (bias * 3.5);
+            let exit = tech.pivot + (spread * 0.5) + (bias * 3.5);
+            const minP = currentCurrency === 'usd' ? 6 : 4;
+            if (exit - entry < minP) exit = entry + minP;
+            let verdict = "관망 (Neutral)";
+            let color = "slate";
+            if (price < entry) { verdict = "적극 매수 (Strong Buy)"; color = "green"; }
+            else if (price > exit) { verdict = "적극 매도 (Strong Sell)"; color = "red"; }
+            return { ...tech, entry, exit, verdict, color, bias, isVolMode };
         }
 
-        function updateUI(res) {
+        function updateUI(res, price) {
             const vTitle = document.getElementById('verdict-title');
-            const vDesc = document.getElementById('verdict-desc');
-            const vIcon = document.getElementById('verdict-icon');
             const vBg = document.getElementById('verdict-bg');
-            
+            const vIcon = document.getElementById('verdict-icon');
             vTitle.innerText = res.verdict;
-            
+            document.getElementById('vol-badge').style.display = res.isVolMode ? 'inline-block' : 'none';
             if (res.color === 'green') {
-                vDesc.innerText = "상승 여력이 보입니다. 진입 적기!";
-                vIcon.innerHTML = '<i class="fas fa-arrow-alt-circle-up text-green-500"></i>';
                 vBg.className = "absolute top-0 left-0 w-2 h-full bg-green-500";
+                vIcon.innerHTML = '<i class="fas fa-arrow-circle-up text-green-500"></i>';
+                document.getElementById('verdict-desc').innerText = "상승 압력이 매우 강합니다. 진입하기 좋은 가격대입니다.";
             } else if (res.color === 'red') {
-                vDesc.innerText = "단기 고점입니다. 수익 실현하세요.";
-                vIcon.innerHTML = '<i class="fas fa-arrow-alt-circle-down text-red-500"></i>';
                 vBg.className = "absolute top-0 left-0 w-2 h-full bg-red-500";
+                vIcon.innerHTML = '<i class="fas fa-arrow-circle-down text-red-500"></i>';
+                document.getElementById('verdict-desc').innerText = "단기 고점 도달. 수익 실현 혹은 관망이 필요합니다.";
             } else {
-                vDesc.innerText = "변동성이 적거나 애매한 구간입니다.";
-                vIcon.innerHTML = '<i class="fas fa-pause-circle text-slate-300"></i>';
                 vBg.className = "absolute top-0 left-0 w-2 h-full bg-slate-400";
+                vIcon.innerHTML = '<i class="fas fa-pause-circle text-slate-300"></i>';
+                document.getElementById('verdict-desc').innerText = "추세가 불분명합니다. 다음 타점을 기다리세요.";
             }
-
-            const entryVal = Math.floor(res.entry);
-            const exitVal = Math.floor(res.exit);
-            
-            document.getElementById('target-entry').innerText = entryVal.toLocaleString() + "원";
-            document.getElementById('target-exit').innerText = exitVal.toLocaleString() + "원";
-            
-            const currentP = parseFloat(document.getElementById('price-input').value);
-            const gap = entryVal - Math.floor(currentP);
-            const profit = exitVal - entryVal;
-            
-            if (res.color === 'green') {
-                document.getElementById('entry-gap').innerText = gap === 0 ? "현재가 진입" : `현재가 대비 ${gap > 0 ? '+' : ''}${gap}원`;
-            } else {
-                 document.getElementById('entry-gap').innerText = `재진입 목표: ${entryVal}원`;
-            }
-            
-            document.getElementById('profit-calc').innerText = `틱당 수익폭: +${profit}원`;
-
+            document.getElementById('target-entry').innerText = Math.floor(res.entry).toLocaleString() + "원";
+            document.getElementById('target-exit').innerText = Math.floor(res.exit).toLocaleString() + "원";
+            const gap = Math.floor(res.entry - price);
+            document.getElementById('entry-gap').innerText = gap >= 0 ? `현재가 대비 +${gap}원` : `현재가 대비 ${gap}원`;
+            document.getElementById('profit-calc').innerText = `틱당 수익: +${Math.floor(res.exit - res.entry)}원`;
             document.getElementById('rsi-val').innerText = res.rsi.toFixed(1);
-            document.getElementById('rsi-bar').style.width = res.rsi + "%";
-            document.getElementById('rsi-bar').className = `h-full rounded-full ${res.rsi > 70 ? 'bg-red-500' : (res.rsi < 30 ? 'bg-green-500' : 'bg-slate-400')}`;
-            
             document.getElementById('pivot-val').innerText = Math.floor(res.pivot);
             document.getElementById('ma5-val').innerText = Math.floor(res.ma5);
         }
 
-        async function getGeminiAnalysis(price, tech) {
-            // Retrieve key from LocalStorage
-            const storedKey = localStorage.getItem('gemini_api_key');
-            // If no key in storage, try hardcoded one (for dev/demo), else throw error
-            const finalKey = storedKey || apiKey;
-
-            if (!finalKey) {
-                throw new Error("AI 분석을 위해 상단 설정(⚙️)에서 API 키를 입력해주세요.");
-            }
-
-            const prompt = `
-                당신은 '토스뱅크 환테크(환전수수료 무료)' 전문 트레이더입니다.
-                현재 ${currentCurrency.toUpperCase()} 가격은 ${price}원입니다.
-                기술적 지표: RSI ${tech.rsi.toFixed(1)}, Pivot ${Math.floor(tech.pivot)}, MA5 ${Math.floor(tech.ma5)}.
-                판단: ${tech.verdict}. 목표 수익폭: ${Math.floor(tech.exit - tech.entry)}원.
-                
-                사용자에게 3줄 이내로 명확하게 조언해주세요.
-                Investing.com 스타일로 전문 용어(지지선, 저항선, 과매수/매도)를 섞어서 설명하되,
-                선행지표(달러인덱스, 엔달러, 미국금리)를 꼭 확인하고 진입하라는 조언을 포함해주세요.
-                결론은 '지금 사세요/파세요/기다리세요'로 확실하게 끝맺어주세요.
-            `;
-            
+        async function getGeminiBriefing(price, res) {
+            const key = localStorage.getItem('gemini_api_key');
+            const news = document.getElementById('news-context').value;
+            const prompt = `당신은 환테크 전문가입니다. 상황: ${currentCurrency.toUpperCase()}, 가격 ${price}원. 지표: RSI ${res.rsi.toFixed(1)}, Pivot ${Math.floor(res.pivot)}. 뉴스이슈: ${news}. 3줄 이내로 명확하게 전략 브리핑을 해주세요.`;
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
                 const data = await response.json();
-                
-                if (data.error) {
-                    throw new Error("API 키 오류: 키를 다시 확인해주세요.");
-                }
-                
                 return data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
-            } catch (e) {
-                console.error(e);
-                throw e;
-            }
+            } catch (e) { throw new Error("AI 연결 지연됨."); }
         }
     </script>
 </body>
