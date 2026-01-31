@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 Pro+ (JPY Fix)</title>
+    <title>토스 환율 스캘퍼 Pro+ (Expert News)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -55,7 +55,6 @@
 
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* News context readability */
         #news-context {
             line-height: 1.6;
             letter-spacing: -0.01em;
@@ -109,7 +108,7 @@
                     <h3 class="text-sm font-black text-slate-700 flex items-center">
                         <i class="fas fa-sliders-h text-blue-500 mr-2 text-base"></i>STEP 1. 시장 심리 가중치
                     </h3>
-                    <div class="flex items-center gap-1.5 bg-orange-50 px-2 py-1 rounded-lg">
+                    <div class="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1.5 rounded-lg">
                         <span class="text-[9px] font-black text-orange-600 uppercase">Volatility Mode</span>
                         <input type="checkbox" id="vol-mode" class="w-4 h-4 accent-orange-500 cursor-pointer">
                     </div>
@@ -280,6 +279,10 @@
                 link.href = "https://kr.investing.com/currencies/usd-jpy";
             }
             document.getElementById('result-area').classList.add('hidden');
+            // Reset input and news
+            document.getElementById('price-input').value = '';
+            document.getElementById('news-context').value = '';
+            setBias('flat');
         }
 
         function setBias(dir) {
@@ -300,7 +303,14 @@
             const newsArea = document.getElementById('news-context');
             loader.classList.remove('hidden');
 
-            const prompt = `Act as a professional FX analyst. Search and analyze the LATEST news for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}. Summarize in 2 sentences in Korean. Suggest sentiment: 'Strong' if it's bullish for the currency, 'Weak' if it's bearish, or 'Neutral'.`;
+            // 🎯 정밀 검색 프롬프트로 수정 (정확도 핵심)
+            const prompt = `당신은 외환(FX) 전문 애널리스트입니다. 현재 토스뱅크 사용자를 위해 ${currentCurrency === 'usd' ? '달러 인덱스(DXY)와 원/달러 환율' : '엔/달러(USD/JPY)와 엔/원 환율'}에 영향을 주는 **가장 최근(지난 24시간 이내)의 핵심 경제 뉴스**를 구글 검색으로 찾아서 분석하세요. 
+            미국 연준(Fed) 금리 정책, 고용 지표, 물가 지수(CPI), 일본은행(BoJ) 금리 결정, 외환 당국 개입 가능성 등을 중점적으로 확인하세요. 
+            분석 결과는: 
+            1. 현재 가장 중요한 팩트 한 줄 요약
+            2. 이것이 환율에 주는 직접적인 영향 분석 (강세/약세 원인)
+            이렇게 2~3문장으로 한국어로 답변하세요. 
+            **또한 답변 마지막에 반드시 [추세:강세], [추세:보합], [추세:약세] 중 하나를 포함하세요.**`;
 
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
@@ -312,15 +322,21 @@
                     })
                 });
                 const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "뉴스 분석 데이터를 가져오지 못했습니다.";
-                newsArea.value = text.trim();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "뉴스 데이터를 분석할 수 없습니다.";
+                newsArea.value = text.replace(/\[추세:.*\]/, '').trim();
                 
-                if(text.includes('강세') || text.includes('상승') || text.includes('Strong')) setBias('up');
-                else if(text.includes('약세') || text.includes('하락') || text.includes('Weak')) setBias('down');
-                else setBias('flat');
+                // 💡 스마트 버튼 연동 (태그 파싱)
+                if(text.includes('[추세:강세]')) setBias('up');
+                else if(text.includes('[추세:약세]')) setBias('down');
+                else if(text.includes('[추세:보합]')) setBias('flat');
+                else {
+                    // 폴백 로직 (키워드 매칭)
+                    if(text.includes('상승') || text.includes('강세')) setBias('up');
+                    else if(text.includes('하락') || text.includes('약세')) setBias('down');
+                }
 
             } catch (e) {
-                newsArea.value = "이슈 체크 중 오류가 발생했습니다.";
+                newsArea.value = "최신 이슈 체크 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.";
             } finally {
                 loader.classList.add('hidden');
             }
@@ -337,7 +353,7 @@
                 if (historicalData.usd.length === 0) await fetchHistoricalData();
                 
                 const history = currentCurrency === 'usd' ? historicalData.usd : historicalData.jpy;
-                if (!history || history.length < 15) throw new Error("분석에 필요한 데이터가 부족합니다. 잠시 후 다시 시도하세요.");
+                if (!history || history.length < 15) throw new Error("데이터 수집 중입니다. 5초 후 다시 시도하세요.");
 
                 const tech = calculateTechnicals(inputVal, history);
                 const final = applyWeights(tech, inputVal);
@@ -387,25 +403,19 @@
             if (activeBias === 'up') biasVal = 1.0;
             else if (activeBias === 'down') biasVal = -1.0;
 
-            // 🛠 JPY 특수 보정: 엔/원 환율은 달러/원 및 엔/달러의 복합 관계이므로 가중치를 더 섬세하게 조절
-            // USD/JPY가 강세(엔저)일 때 JPY/KRW는 하락 압력을 받지만, 이를 단순 반전시키지 않고 
-            // 현재가(price)를 기준으로 목표가를 재설정하는 로직 추가
             if (currentCurrency === 'jpy') {
-                biasVal *= -0.8; // 과도한 인버트 방지 (1.5 -> 0.8로 하향 조정)
+                biasVal *= -0.8; 
             }
 
-            let spread = tech.atr * (isVolMode ? 1.8 : 0.8);
-            
-            // 💡 피벗 포인트와 현재가 중 더 추세에 가까운 쪽을 기준으로 범위 설정
+            let spread = tech.atr * (isVolMode ? 1.8 : 0.85);
             const anchor = (Math.abs(price - tech.pivot) < tech.atr * 2) ? tech.pivot : price;
             
-            let entry = anchor - (spread * 0.4) + (biasVal * 2.5);
-            let exit = anchor + (spread * 0.4) + (biasVal * 2.5);
+            let entry = anchor - (spread * 0.4) + (biasVal * 3.0);
+            let exit = anchor + (spread * 0.4) + (biasVal * 3.0);
 
-            // ⚠️ 수익 보존 로직: 매수가는 현재가보다 낮게, 매도가는 현재가보다 높게 유지되도록 가이드
             if (price < entry) entry = price - (tech.atr * 0.2); 
             
-            const minProfit = currentCurrency === 'usd' ? 6.0 : 4.0;
+            const minProfit = currentCurrency === 'usd' ? 6.5 : 4.5;
             if (exit - entry < minProfit) exit = entry + minProfit;
 
             let verdict = "관망 (Neutral)";
@@ -428,7 +438,6 @@
             document.getElementById('vol-badge').style.display = res.isVolMode ? 'inline-block' : 'none';
             vBg.className = `absolute top-0 left-0 w-2 h-full bg-${res.color}-500`;
             
-            // 🛠 실시간 상태에 따른 라벨 변경 (현재가 936원인데 목표 933원 같은 모순 방지)
             if (price > res.exit) {
                 lExit.innerText = "현 시점 매도 추천";
                 document.getElementById('target-exit').innerText = Math.floor(price).toLocaleString() + "원";
@@ -452,10 +461,14 @@
 
         async function getGeminiBriefing(price, res, key) {
             const news = document.getElementById('news-context').value;
-            // 🛠 브리핑 가공 지시: 표 형식 지양, 3줄 핵심 요약
-            const prompt = `당신은 환테크 전문가입니다. 통화: ${currentCurrency.toUpperCase()}, 현재가: ${price}원. 지표: RSI ${res.rsi.toFixed(1)}, Pivot ${Math.floor(res.pivot)}. 뉴스이슈: ${news}. 
-            분석결과 매수추천 ${Math.floor(res.entry)}원, 매도목표 ${Math.floor(res.exit)}원입니다.
-            **주의: 절대 표(table)를 만들지 마세요.** 1. 현재 시장 상황 요약, 2. 도출된 가격의 근거, 3. 당부사항 순으로 3개의 짧은 문장으로 브리핑해주세요. 한국어로 결론만 말하세요.`;
+            // 🎯 브리핑 분석 강화
+            const prompt = `당신은 환테크 전문가입니다. 통화: ${currentCurrency.toUpperCase()}, 현재가: ${price}원. 기술지표: RSI ${res.rsi.toFixed(1)}, Pivot ${Math.floor(res.pivot)}. 
+            **실시간 뉴스 현황:** ${news}
+            위 정보들을 종합하여 3줄 핵심 브리핑을 해주세요.
+            1. 현재 시장이 이 방향으로 움직이는 구체적 이유
+            2. 도출된 가격 전략의 타당성 (왜 이 가격에 사야 하는지)
+            3. 투자자가 지금 당장 주의해야 할 점
+            절대 표를 만들지 말고 텍스트로만 답변하세요. 한국어만 사용하세요.`;
             
             try {
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
