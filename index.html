@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 Pro+ (Perfect Fix)</title>
+    <meta name="theme-color" content="#1e40af">
+    <title>토스 환율 스캘퍼 Pro+ (Stable Final)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         .gradient-bg { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); }
-        .card-shadow { box-shadow: 0 10px 30px -10px rgba(30, 64, 175, 0.2); }
+        .card-shadow { box-shadow: 0 10px 30px -10px rgba(30, 64, 175, 0.3); }
         
-        /* 심리 버튼 디자인 개선 */
+        /* 선택된 버튼 상태 디자인 강화 */
         .sent-btn { 
-            @apply flex-1 py-3 rounded-xl text-[13px] font-black border transition-all flex flex-col items-center gap-1;
-            background: #f8fafc; color: #64748b; border-color: #e2e8f0;
+            @apply flex-1 py-3 rounded-2xl text-[13px] font-black border transition-all flex flex-col items-center gap-1;
+            background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0;
         }
 
         .sent-btn.active-up { 
@@ -29,8 +29,8 @@
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); transform: translateY(-2px);
         }
         .sent-btn.active-flat { 
-            background: #64748b !important; color: white !important; border-color: #475569 !important;
-            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+            background: #475569 !important; color: white !important; border-color: #334155 !important;
+            box-shadow: 0 4px 15px rgba(71, 85, 105, 0.3);
         }
 
         .result-enter { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
@@ -45,87 +45,86 @@
 </head>
 <body class="bg-slate-50 min-h-screen pb-10">
 
-    <div class="max-w-md mx-auto min-h-screen bg-white shadow-2xl md:min-h-0 md:rounded-[2rem] md:my-8 md:border md:border-slate-100 overflow-hidden relative">
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-2xl md:min-h-0 md:rounded-[2.5rem] md:my-8 md:border md:border-slate-100 overflow-hidden relative">
         
         <!-- Header -->
-        <div class="gradient-bg p-6 pb-8 text-white rounded-b-[2.5rem] shadow-lg relative z-10">
-            <div class="flex justify-between items-center mb-6">
+        <div class="gradient-bg p-6 pb-10 text-white rounded-b-[3rem] shadow-lg relative z-10">
+            <div class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight flex items-center gap-2">
                         <svg class="w-7 h-7 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         토스 스캘퍼 Pro+
                     </h1>
-                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">지능형 하이브리드 분석 엔진</p>
+                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">실시간 데이터 통합 분석 시스템</p>
                 </div>
-                <!-- Settings Button (SVG) -->
                 <button onclick="toggleSettings()" class="bg-white/10 backdrop-blur-md w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </button>
             </div>
 
-            <div class="flex p-1 bg-blue-900/50 rounded-xl backdrop-blur-sm border border-white/10">
-                <button onclick="setCurrency('usd')" id="btn-usd" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm">미국 달러 (USD)</button>
-                <button onclick="setCurrency('jpy')" id="btn-jpy" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white">일본 엔 (JPY)</button>
+            <div class="flex p-1 bg-blue-900/40 rounded-2xl backdrop-blur-md border border-white/10">
+                <button onclick="setCurrency('usd')" id="btn-usd" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all bg-white text-blue-600 shadow-sm">미국 달러 (USD)</button>
+                <button onclick="setCurrency('jpy')" id="btn-jpy" class="flex-1 py-3 rounded-xl text-sm font-bold transition-all text-blue-100 hover:text-white">일본 엔 (JPY)</button>
             </div>
         </div>
 
-        <!-- Settings -->
-        <div id="settings-area" class="hidden px-6 -mt-6 relative z-30 mb-4 result-enter">
-            <div class="bg-slate-800 text-white rounded-2xl p-5 shadow-2xl border border-slate-700">
-                <h3 class="text-xs font-bold text-slate-400 mb-2 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2V7a5 5 0 00-5-5zM7 7a3 3 0 016 0v2H7V7z"></path></svg> Gemini API Key
+        <!-- Settings Area -->
+        <div id="settings-area" class="hidden px-6 -mt-8 relative z-30 mb-4 result-enter">
+            <div class="bg-slate-800 text-white rounded-3xl p-6 shadow-2xl border border-slate-700">
+                <h3 class="text-xs font-bold text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
+                    <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"></path></svg> API Key Setup
                 </h3>
                 <div class="flex gap-2 mb-2">
-                    <input type="password" id="api-key-input" placeholder="키를 입력하세요" class="flex-1 bg-slate-700 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none focus:border-blue-500">
-                    <button onclick="saveApiKey()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-bold">저장</button>
+                    <input type="password" id="api-key-input" placeholder="키를 입력하세요" class="flex-1 bg-slate-700 border border-slate-600 text-white text-xs p-3 rounded-xl outline-none focus:border-blue-500">
+                    <button onclick="saveApiKey()" class="bg-blue-600 text-white text-xs px-5 py-3 rounded-xl font-bold">저장</button>
                 </div>
-                <p id="key-status" class="text-[10px] text-slate-500 italic">정확한 분석을 위해 API 키가 필요합니다.</p>
+                <p id="key-status" class="text-[10px] text-slate-500 italic px-1">API 키가 정확해야 실시간 이슈 체크가 가능합니다.</p>
             </div>
         </div>
 
-        <!-- Step 1 -->
+        <!-- Step 1: Sentiment -->
         <div class="px-6 -mt-6 relative z-20 mb-6" id="main-content">
-            <div class="bg-white rounded-2xl p-5 card-shadow border border-slate-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-sm font-black text-slate-700 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <div class="bg-white rounded-[2rem] p-6 card-shadow border border-slate-100">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-[14px] font-black text-slate-700 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         STEP 1. 시장 심리 가중치
                     </h3>
-                    <div class="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1.5 rounded-lg">
+                    <div class="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full">
                         <span class="text-[10px] font-black text-orange-600 uppercase">Vol Mode</span>
                         <input type="checkbox" id="vol-mode" class="w-4 h-4 accent-orange-500 cursor-pointer">
                     </div>
                 </div>
                 
-                <div class="space-y-5">
+                <div class="space-y-6">
                     <div class="pb-2">
-                        <button onclick="autoCheckNews()" id="check-news-btn" class="ai-pulse w-full bg-blue-600 text-white py-4 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg">
-                            <span class="text-lg">✨</span> AI 실시간 이슈 체크 (자동)
+                        <button onclick="autoCheckNews()" id="check-news-btn" class="ai-pulse w-full bg-blue-600 text-white py-4 rounded-2xl text-[15px] font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg">
+                            <span class="text-xl">✨</span> AI 실시간 이슈 체크 (자동)
                         </button>
-                        <div id="news-loading" class="hidden mt-2 text-center py-2">
-                             <div class="inline-block w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mr-2"></div>
-                             <span id="loading-msg" class="text-[12px] text-slate-400 font-bold">분석 엔진 가동 중...</span>
+                        <div id="news-loading" class="hidden mt-3 text-center py-2">
+                             <div class="inline-block w-5 h-5 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mr-2"></div>
+                             <span id="loading-msg" class="text-[13px] text-slate-500 font-bold">글로벌 지표 분석 중...</span>
                         </div>
-                        <textarea id="news-context" rows="3" class="w-full mt-3 bg-slate-50 text-[15px] p-4 border border-slate-200 outline-none focus:border-blue-400 font-bold text-slate-700 shadow-inner" 
+                        <textarea id="news-context" rows="3" class="w-full mt-4 bg-slate-50 text-[15px] p-5 border border-slate-200 outline-none focus:border-blue-400 font-bold text-slate-700 shadow-inner" 
                             placeholder="AI 분석 내용이 여기에 표시됩니다."></textarea>
                     </div>
 
-                    <div class="flex flex-col gap-3 border-t pt-5 border-slate-50">
+                    <div class="flex flex-col gap-4 border-t pt-6 border-slate-50">
                         <div class="flex justify-between items-center px-1">
-                            <span id="sentiment-label" class="text-[13px] font-black text-slate-600">지표 추세 가중치</span>
+                            <span id="sentiment-label" class="text-[13px] font-black text-slate-600">지표 추세 가중치 (DXY 기준)</span>
                             <a id="chart-link" href="https://kr.investing.com/currencies/us-dollar-index" target="_blank" class="text-[11px] text-blue-600 font-bold underline flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> 실시간 차트
                             </a>
                         </div>
-                        <div class="flex gap-2.5" id="ctrl-bias">
+                        <div class="flex gap-3" id="ctrl-bias">
                             <button onclick="setBias('up')" class="sent-btn" id="btn-up">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>강세(빨강)
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>강세(빨강)
                             </button>
                             <button onclick="setBias('flat')" class="sent-btn active-flat" id="btn-flat">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4"></path></svg>보합
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M20 12H4"></path></svg>보합
                             </button>
                             <button onclick="setBias('down')" class="sent-btn" id="btn-down">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>약세(파랑)
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>약세(파랑)
                             </button>
                         </div>
                     </div>
@@ -133,140 +132,150 @@
             </div>
         </div>
 
-        <!-- Step 2 -->
+        <!-- Step 2: Price -->
         <div class="px-6 relative z-20 mb-8">
-            <div class="bg-white rounded-2xl p-6 card-shadow border border-slate-100">
-                <label class="text-sm font-black text-slate-700 uppercase tracking-wide block mb-3 ml-1">STEP 2. 현재 토스뱅크 가격</label>
+            <div class="bg-white rounded-[2rem] p-7 card-shadow border border-slate-100">
+                <label class="text-[14px] font-black text-slate-700 uppercase tracking-wide block mb-4 ml-1">STEP 2. 현재 토스뱅크 가격</label>
                 <div class="relative">
                     <input type="number" inputmode="decimal" id="price-input" 
-                        class="w-full text-4xl font-black text-slate-800 p-5 pr-12 rounded-2xl border-2 border-slate-100 outline-none focus:border-blue-500 placeholder-slate-200"
+                        class="w-full text-5xl font-black text-slate-800 p-6 pr-14 rounded-3xl border-2 border-slate-100 outline-none focus:border-blue-500 placeholder-slate-200"
                         placeholder="0">
-                    <span class="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-lg">원</span>
+                    <span class="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">원</span>
                 </div>
                 
-                <button onclick="analyzePrice()" class="w-full mt-6 bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-black active:scale-[0.98] transition shadow-xl flex justify-center items-center gap-3 text-lg">
+                <button onclick="analyzePrice()" class="w-full mt-8 bg-slate-900 text-white font-black py-5 rounded-[1.5rem] hover:bg-black active:scale-[0.98] transition shadow-xl flex justify-center items-center gap-3 text-xl">
                     <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path></svg> 마진 타격 분석
                 </button>
             </div>
         </div>
 
-        <!-- Results Area -->
+        <!-- Result Section -->
         <div id="result-area" class="hidden px-6 mt-2 space-y-6 pb-12">
             <div class="result-enter">
-                <div class="bg-white border border-slate-100 rounded-2xl p-5 card-shadow relative overflow-hidden">
-                    <div id="verdict-bg" class="absolute top-0 left-0 w-2 h-full bg-slate-400"></div>
-                    <div class="flex justify-between items-start pl-3">
+                <div class="bg-white border border-slate-100 rounded-[2rem] p-6 card-shadow relative overflow-hidden">
+                    <div id="verdict-bg" class="absolute top-0 left-0 w-2.5 h-full bg-slate-400"></div>
+                    <div class="flex justify-between items-start pl-4">
                         <div>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">AI Expert Verdict</p>
-                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800 tracking-tighter">분석 완료</h2>
-                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium">실시간 변수를 반영한 전략입니다.</p>
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest mb-1">AI Expert Verdict</p>
+                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800 tracking-tighter">분석 결과</h2>
+                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium">최신 시장 환경을 반영한 전략입니다.</p>
                         </div>
-                        <div id="verdict-icon" class="text-4xl text-slate-200">
-                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div id="verdict-icon" class="text-blue-100">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 result-enter">
-                <div class="bg-blue-50 p-5 rounded-2xl border border-blue-100 relative overflow-hidden text-center">
-                    <span id="label-entry" class="text-[11px] font-black text-blue-400 block mb-1">매수 진입가</span>
+            <div class="grid grid-cols-2 gap-4 result-enter">
+                <div class="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 relative overflow-hidden text-center">
+                    <span id="label-entry" class="text-[12px] font-black text-blue-400 block mb-1">매수 진입가</span>
                     <div id="target-entry" class="text-2xl font-black text-blue-700">---</div>
-                    <div id="entry-gap" class="text-[10px] text-blue-400 font-bold mt-1">---</div>
+                    <div id="entry-gap" class="text-[11px] text-blue-400 font-bold mt-1">---</div>
                 </div>
-                <div class="bg-red-50 p-5 rounded-2xl border border-red-100 relative overflow-hidden text-center">
-                    <span id="label-exit" class="text-[11px] font-black text-red-400 block mb-1">매도 목표가</span>
+                <div class="bg-red-50 p-6 rounded-[2rem] border border-red-100 relative overflow-hidden text-center">
+                    <span id="label-exit" class="text-[12px] font-black text-red-400 block mb-1">매도 목표가</span>
                     <div id="target-exit" class="text-2xl font-black text-red-700">---</div>
-                    <div id="profit-calc" class="text-[10px] text-red-400 font-bold mt-1">---</div>
+                    <div id="profit-calc" class="text-[11px] text-red-400 font-bold mt-1">---</div>
                 </div>
             </div>
 
-            <div class="bg-slate-900 rounded-2xl p-6 border border-slate-700 shadow-2xl relative result-enter">
-                <div class="absolute top-4 right-5 text-blue-400/20">
+            <div class="bg-slate-900 rounded-[2rem] p-7 border border-slate-700 shadow-2xl relative result-enter">
+                <div class="absolute top-5 right-6 text-blue-400/20">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 </div>
-                <h3 class="text-xs font-bold text-blue-400 mb-3 flex items-center gap-2 uppercase tracking-widest">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Analyst Briefing
+                <h3 class="text-xs font-bold text-blue-400 mb-4 flex items-center gap-2 uppercase tracking-widest">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Analyst Briefing
                 </h3>
-                <div id="ai-comment" class="text-[15px] text-slate-200 leading-relaxed font-medium">전략을 수립 중입니다.</div>
+                <div id="ai-comment" class="text-[15px] text-slate-100 leading-relaxed font-medium">분석 대기 중입니다.</div>
             </div>
             
-            <div class="text-center text-[10px] text-slate-400 font-bold result-enter">
-                RSI: <span id="rsi-val" class="text-slate-600 mr-2">--</span>
-                Pivot: <span id="pivot-val" class="text-slate-600 mr-2">--</span>
+            <div class="text-center text-[11px] text-slate-400 font-bold result-enter pb-4">
+                RSI: <span id="rsi-val" class="text-slate-600 mr-3">--</span>
+                Pivot: <span id="pivot-val" class="text-slate-600 mr-3">--</span>
                 MA5: <span id="ma5-val" class="text-slate-600">--</span>
             </div>
         </div>
 
         <!-- Loader -->
-        <div id="loading-overlay" class="hidden fixed inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
+        <div id="loading-overlay" class="hidden fixed inset-0 bg-white/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
             <div class="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-            <p class="mt-6 text-blue-800 font-black text-[13px] tracking-widest animate-pulse uppercase">Analytic Process...</p>
+            <p class="mt-8 text-blue-900 font-black text-[14px] tracking-widest animate-pulse uppercase">Analytic Process...</p>
         </div>
     </div>
 
     <script>
-        // 🚀 모델명 수정: gemini-1.5-flash (표준 명칭)
-        const GEMINI_MODEL = 'gemini-1.5-flash';
+        // 🚀 모델명 순차 시도 리스트 (가장 호환성 높은 이름부터)
+        const MODEL_LIST = ['gemini-1.5-flash', 'gemini-1.5-flash-001', 'gemini-1.5-pro'];
         const HISTORY_API = 'https://api.frankfurter.app';
         let currentCurrency = 'usd';
         let historicalData = { usd: [], jpy: [] };
         let activeBias = 'flat';
 
         // --- 🚀 ULTRA ROBUST AI CALL ---
-        async function robustAICall(prompt, useSearch, key) {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`;
+        async function fetchGemini(prompt, useSearch, key) {
+            const getEndpoint = (model) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
             
-            const makeRequest = async (withSearch) => {
-                const body = { contents: [{ parts: [{ text: prompt }] }] };
-                if (withSearch) body.tools = [{ "google_search": {} }];
-                
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                    signal: AbortSignal.timeout(15000)
-                });
-                
-                const data = await response.json();
-                if (data.error) throw new Error(data.error.message);
-                return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            const makeBody = (text, search) => {
+                const base = { contents: [{ parts: [{ text }] }] };
+                if (search) base.tools = [{ "google_search": {} }];
+                return base;
             };
 
-            // 1단계: 검색 포함 시도
-            if (useSearch) {
+            // 각 모델별로 시도
+            for (let modelName of MODEL_LIST) {
                 try {
-                    const result = await makeRequest(true);
-                    if (result) return result;
+                    const response = await fetch(getEndpoint(modelName), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(makeBody(prompt, useSearch)),
+                        signal: AbortSignal.timeout(12000)
+                    });
+                    
+                    const data = await response.json();
+                    if (response.ok && data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        return data.candidates[0].content.parts[0].text;
+                    }
+                    
+                    // 만약 검색 도구 때문에 에러난 거라면 검색 없이 재시도
+                    if (useSearch) {
+                        const retryResponse = await fetch(getEndpoint(modelName), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(makeBody(prompt, false))
+                        });
+                        const retryData = await retryResponse.json();
+                        if (retryResponse.ok && retryData?.candidates?.[0]?.content?.parts?.[0]?.text) {
+                            return retryData.candidates[0].content.parts[0].text;
+                        }
+                    }
                 } catch (e) {
-                    console.warn("Search Tool failed, using text fallback...");
+                    console.warn(`Model ${modelName} failed: ${e.message}`);
+                    continue;
                 }
             }
-
-            // 2단계: 일반 텍스트 모드
-            try {
-                return await makeRequest(false);
-            } catch (e) {
-                return `오류: ${e.message}`;
-            }
+            return null;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchHistoricalData();
+            setCurrency('usd'); 
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
-                document.getElementById('key-status').innerText = "✅ API 키가 연결되었습니다.";
-                document.getElementById('key-status').classList.replace('text-slate-500', 'text-green-400');
+                document.getElementById('key-status').innerText = "✅ 시스템 연결 성공 (API 키 저장됨)";
+                document.getElementById('key-status').classList.replace('text-slate-500', 'text-green-500');
             }
             document.getElementById('price-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') analyzePrice(); });
         });
 
         function setCurrency(curr) {
             currentCurrency = curr;
-            document.getElementById('btn-usd').className = curr === 'usd' ? 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm' : 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
-            document.getElementById('btn-jpy').className = curr === 'jpy' ? 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm' : 'flex-1 py-2.5 rounded-lg text-sm font-bold transition-all text-blue-100 hover:text-white';
-            document.getElementById('sentiment-label').innerText = curr === 'usd' ? "지표 추세 가중치 (DXY 기준)" : "지표 추세 가중치 (USD/JPY 기준)";
-            document.getElementById('chart-link').href = curr === 'usd' ? "https://kr.investing.com/currencies/us-dollar-index" : "https://kr.investing.com/currencies/usd-jpy";
+            const label = document.getElementById('sentiment-label');
+            const link = document.getElementById('chart-link');
+            document.getElementById('btn-usd').className = curr === 'usd' ? 'flex-1 py-3 rounded-xl text-sm font-bold transition-all bg-white text-blue-600 shadow-sm' : 'flex-1 py-3 rounded-xl text-sm font-bold transition-all text-blue-100 hover:text-white';
+            document.getElementById('btn-jpy').className = curr === 'jpy' ? 'flex-1 py-3 rounded-xl text-sm font-bold transition-all bg-white text-blue-600 shadow-sm' : 'flex-1 py-3 rounded-xl text-sm font-bold transition-all text-blue-100 hover:text-white';
+            label.innerText = curr === 'usd' ? "지표 추세 가중치 (DXY 기준)" : "지표 추세 가중치 (USD/JPY 기준)";
+            link.href = curr === 'usd' ? "https://kr.investing.com/currencies/us-dollar-index" : "https://kr.investing.com/currencies/usd-jpy";
             document.getElementById('result-area').classList.add('hidden');
             setBias('flat');
         }
@@ -281,27 +290,27 @@
 
         async function autoCheckNews() {
             const key = localStorage.getItem('gemini_api_key');
-            if (!key) { alert("⚙️ 상단 설정에서 API 키를 등록해주세요."); return; }
+            if (!key) { alert("⚙️ 설정에서 API 키를 먼저 입력해주세요."); return; }
             
             const loader = document.getElementById('news-loading');
             const newsArea = document.getElementById('news-context');
             loader.classList.remove('hidden');
-            newsArea.value = "AI가 실시간 뉴스를 수집하여 추세를 분석 중입니다...";
+            newsArea.value = "최신 글로벌 지표 수집 및 추세 분석 중입니다...";
 
-            const prompt = `Act as a pro currency analyst. Search and summarize the LATEST trend for ${currentCurrency.toUpperCase()} market in Korean (2 short sentences). End with [추세:강세], [추세:보합], or [추세:약세].`;
+            const prompt = `Act as a currency analyst. Search and summarize latest trend for ${currentCurrency.toUpperCase()} market in Korean (2 short sentences). End with [추세:강세], [추세:보합], or [추세:약세].`;
 
             try {
-                const text = await robustAICall(prompt, true, key);
-                if (text && !text.startsWith("오류:")) {
-                    newsArea.value = text.replace(/\[추세:.*\]/, '').trim();
-                    if(text.includes('[추세:강세]')) setBias('up');
-                    else if(text.includes('[추세:약세]')) setBias('down');
+                const result = await fetchGemini(prompt, true, key);
+                if (result) {
+                    newsArea.value = result.replace(/\[추세:.*\]/, '').trim();
+                    if(result.includes('[추세:강세]')) setBias('up');
+                    else if(result.includes('[추세:약세]')) setBias('down');
                     else setBias('flat');
                 } else {
-                    newsArea.value = "현재 실시간 검색 도구가 일시적으로 지연되고 있습니다. 직접 버튼을 선택하여 가중치를 주시거나 잠시 후 다시 시도해 주세요.";
+                    newsArea.value = "현재 뉴스 엔진에 일시적인 장애가 발생했습니다. 직접 버튼을 선택하여 가중치를 주시거나 잠시 후 시도해 주세요.";
                 }
             } catch (e) {
-                newsArea.value = "네트워크 상태가 불안정합니다. 직접 추세를 선택해 주세요.";
+                newsArea.value = "네트워크 상태가 불안정합니다. 수동으로 추세를 선택해 주세요.";
             } finally { loader.classList.add('hidden'); }
         }
 
@@ -320,13 +329,22 @@
                 const ma5 = history.slice(-5).reduce((a,b)=>a+b, 0)/5;
 
                 // Weights Logic
-                let bias = activeBias === 'up' ? 1.0 : (activeBias === 'down' ? -1.0 : 0);
-                if (currentCurrency === 'jpy') bias *= -0.8;
+                let biasVal = activeBias === 'up' ? 1.2 : (activeBias === 'down' ? -1.2 : 0);
+                if (currentCurrency === 'jpy') biasVal *= -0.7; // JPY 특수 가중치 보정
+                
                 const isVol = document.getElementById('vol-mode').checked;
                 let spread = atr * (isVol ? 1.8 : 0.85);
                 const anchor = (Math.abs(inputVal - last) < atr * 2) ? last : inputVal;
-                let entry = anchor - (spread * 0.4) + (bias * 3.0);
-                let exit = anchor + (spread * 0.4) + (bias * 3.0);
+                
+                let entry = anchor - (spread * 0.4) + (biasVal * 3.5);
+                let exit = anchor + (spread * 0.4) + (biasVal * 3.5);
+
+                // JPY/KRW 특수 보정 (현재가 936원 기준 목표가 이상 수치 방지)
+                if (currentCurrency === 'jpy' && inputVal > exit) {
+                    exit = inputVal + 4.5;
+                    entry = inputVal - 2.5;
+                }
+
                 if (inputVal < entry) entry = inputVal - (atr * 0.2);
                 const minP = currentCurrency === 'usd' ? 6.5 : 4.5;
                 if (exit - entry < minP) exit = entry + minP;
@@ -343,9 +361,9 @@
 
                 const key = localStorage.getItem('gemini_api_key');
                 if (key) {
-                    const brPrompt = `Advice for trader. Currency: ${currentCurrency.toUpperCase()}, Price: ${inputVal}. Indicators: RSI ${rsi.toFixed(1)}, Pivot ${Math.floor(last)}. Current Trend: ${document.getElementById('news-context').value}. Suggest Buy ${Math.floor(entry)}, Sell ${Math.floor(exit)}. Give 3 bullet tips in Korean.`;
-                    const comment = await robustAICall(brPrompt, false, key);
-                    document.getElementById('ai-comment').innerHTML = comment || "데이터 분석이 완료되었습니다. 위 전략에 따라 대응하세요.";
+                    const brPrompt = `Trader Advice: Currency ${currentCurrency.toUpperCase()}, Price ${inputVal}. Indicators: RSI ${rsi.toFixed(1)}, Pivot ${Math.floor(last)}. Current Trend Context: ${document.getElementById('news-context').value}. Target Buy ${Math.floor(entry)}, Sell ${Math.floor(exit)}. Give 3 decisive bullet tips in Korean. No tables.`;
+                    const comment = await fetchGemini(brPrompt, false, key);
+                    document.getElementById('ai-comment').innerHTML = comment || "수치 분석 완료. 위 전략대로 매매를 고려하세요.";
                 }
                 document.getElementById('result-area').classList.remove('hidden');
                 setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
