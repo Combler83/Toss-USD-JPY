@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 Pro+ (Stable Fix)</title>
+    <title>토스 환율 스캘퍼 Pro+ (Model Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -88,7 +88,7 @@
                         <i class="fas fa-sliders-h text-blue-500 mr-2 text-base"></i>STEP 1. 시장 심리 가중치
                     </h3>
                     <div class="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1.5 rounded-lg">
-                        <span class="text-[9px] font-black text-orange-600 uppercase">Volatility Mode</span>
+                        <span class="text-[10px] font-black text-orange-600 uppercase">Volatility Mode</span>
                         <input type="checkbox" id="vol-mode" class="w-4 h-4 accent-orange-500 cursor-pointer">
                     </div>
                 </div>
@@ -202,34 +202,39 @@
     </div>
 
     <script>
-        // 🚀 중요: 개인용 API 키 호환성을 위해 모델을 1.5-flash로 고정
-        const GEMINI_MODEL = 'gemini-1.5-flash'; 
+        // 🚀 모델명 수정: 1.5-flash-002 (안정화 버전)
+        const GEMINI_MODELS = ['gemini-1.5-flash-002', 'gemini-1.5-flash-8b', 'gemini-1.5-pro-002'];
         const HISTORY_API = 'https://api.frankfurter.app';
         let currentCurrency = 'usd';
         let historicalData = { usd: [], jpy: [] };
         let activeBias = 'flat';
 
-        // --- Core Utils ---
-        async function fetchWithRetry(url, options, maxRetries = 3) {
-            let delay = 1000;
-            for (let i = 0; i < maxRetries; i++) {
+        // --- Core Utils with Model Fallback ---
+        async function fetchWithRetry(baseUrl, options, key) {
+            // Try models in order
+            for (const model of GEMINI_MODELS) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
                 try {
                     const response = await fetch(url, options);
                     const data = await response.json();
                     
-                    if (!response.ok) {
-                        // 명확한 에러 메시지 반환
-                        const errMsg = data.error?.message || `HTTP Error ${response.status}`;
-                        throw new Error(errMsg);
+                    if (response.ok) return data;
+                    
+                    // If 404 (Model not found), try next model immediately
+                    if (response.status === 404) {
+                        console.warn(`Model ${model} not found, trying next...`);
+                        continue;
                     }
-                    return data;
+                    
+                    // Other errors, throw to show user
+                    const errMsg = data.error?.message || `HTTP Error ${response.status}`;
+                    throw new Error(errMsg);
                 } catch (e) {
-                    console.warn(`Attempt ${i+1} failed:`, e);
-                    if(i === maxRetries - 1) throw e;
-                    await new Promise(res => setTimeout(res, delay));
-                    delay *= 2;
+                    if (e.message.includes("404")) continue; // Try next if 404
+                    throw e; // Stop for other errors
                 }
             }
+            throw new Error("모든 AI 모델 연결에 실패했습니다. 키 권한을 확인하세요.");
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -264,7 +269,7 @@
             else if (dir === 'down') document.getElementById('btn-down').classList.add('active-down');
         }
 
-        // --- AI ISSUE CHECK (FIXED) ---
+        // --- AI ISSUE CHECK ---
         async function autoCheckNews() {
             const key = localStorage.getItem('gemini_api_key');
             if (!key) { alert("⚙️ 상단 설정에서 API 키를 등록해주세요."); return; }
@@ -277,25 +282,23 @@
             newsArea.value = "";
             loadingMsg.innerText = "최신 글로벌 뉴스를 검색 중입니다...";
 
-            // 🎯 표준 모델 1.5-flash 사용 (개인키 호환성 최적화)
             const prompt = `Act as a professional FX analyst. Search and analyze the LATEST news for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}. Summarize in 2 sentences in Korean. Suggest sentiment: 'Strong' if it's bullish for the currency, 'Weak' if it's bearish, or 'Neutral'. Include [추세:강세], [추세:보합], or [추세:약세] at the end.`;
 
             try {
-                // google_search 도구를 사용하되, 실패하면 텍스트 모델로 폴백
-                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
+                // Fetch with retry logic for model fallback
+                const data = await fetchWithRetry(null, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: [{ parts: [{ text: prompt }] }],
-                        tools: [{ "google_search": {} }] // 1.5-flash 지원 도구
+                        tools: [{ "google_search": {} }]
                     })
-                });
+                }, key);
 
-                // 응답 안전하게 파싱
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
                 if(!text) {
                     console.error("API Response Error:", data);
-                    throw new Error("AI 응답이 비어있습니다. API 키 권한을 확인하세요.");
+                    throw new Error("AI 응답 없음. 다시 시도해주세요.");
                 }
 
                 newsArea.value = text.replace(/\[추세:.*\]/, '').trim();
@@ -306,14 +309,7 @@
 
             } catch (e) {
                 console.error(e);
-                // 사용자에게 구체적인 에러 표시
-                let msg = "오류 발생: ";
-                if (e.message.includes('400')) msg += "API 요청 형식이 잘못되었습니다.";
-                else if (e.message.includes('403')) msg += "API 키 권한이 없거나 만료되었습니다.";
-                else if (e.message.includes('429')) msg += "사용량 한도 초과입니다. 잠시 후 시도하세요.";
-                else msg += e.message || "네트워크 상태를 확인해주세요.";
-                
-                newsArea.value = msg;
+                newsArea.value = `오류: ${e.message}`;
             } finally {
                 loader.classList.add('hidden');
             }
@@ -346,7 +342,6 @@
         }
 
         function calculateTechnicals(price, h) {
-            // ... (Same calculation logic) ...
             if (!h || h.length < 15) return { rsi: 50, pivot: price, ma5: price, atr: price*0.005 };
             const last = h[h.length - 1];
             let vol = 0; for(let i=1; i<=14; i++) vol += Math.abs(h[h.length-i] - h[h.length-i-1]);
@@ -404,11 +399,12 @@
             const news = document.getElementById('news-context').value;
             const prompt = `Act as expert. Currency: ${currentCurrency.toUpperCase()}, Price: ${price}. Indicators: RSI ${res.rsi.toFixed(1)}. News: ${news}. Brief 3 lines in Korean. No tables.`;
             try {
-                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
+                // Reuse retry logic for briefing too
+                const data = await fetchWithRetry(null, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
+                }, key);
                 return data?.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g, '<br>') || "브리핑 불가";
             } catch (e) { return "AI 분석 지연 (" + e.message + ")"; }
         }
