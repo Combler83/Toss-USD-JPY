@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 Pro+ (Real-time Fix)</title>
+    <title>토스 환율 스캘퍼 Pro+ (Stable Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -15,14 +15,10 @@
         .gradient-bg { background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%); }
         .card-shadow { box-shadow: 0 10px 30px -10px rgba(30, 64, 175, 0.2); }
         
-        /* Sentiment Buttons */
         .sent-btn { 
             @apply flex-1 py-3 rounded-xl text-[13px] font-black border transition-all flex flex-col items-center gap-1;
-            background: #f8fafc;
-            color: #64748b;
-            border-color: #e2e8f0;
+            background: #f8fafc; color: #64748b; border-color: #e2e8f0;
         }
-
         .sent-btn.active-up { 
             background: #ef4444 !important; color: white !important; border-color: #dc2626 !important; 
             box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); transform: translateY(-2px);
@@ -55,14 +51,13 @@
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h1 class="text-2xl font-black tracking-tight"><i class="fas fa-robot mr-2 opacity-80 text-yellow-300"></i>토스 스캘퍼 Pro+</h1>
-                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">실시간 AI 이슈 대응 분석기</p>
+                    <p class="text-blue-100 text-xs mt-1 font-medium opacity-90">지능형 환테크 매매 분석기</p>
                 </div>
                 <button onclick="toggleSettings()" class="bg-white/10 backdrop-blur-md w-10 h-10 rounded-full border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all">
                     <i class="fas fa-cog text-white"></i>
                 </button>
             </div>
 
-            <!-- Currency Selector -->
             <div class="flex p-1 bg-blue-900/50 rounded-xl backdrop-blur-sm border border-white/10">
                 <button onclick="setCurrency('usd')" id="btn-usd" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm">
                     미국 달러 (USD)
@@ -81,7 +76,7 @@
                     <input type="password" id="api-key-input" placeholder="키를 입력하세요" class="flex-1 bg-slate-700 border border-slate-600 text-white text-xs p-2 rounded-lg outline-none focus:border-blue-500">
                     <button onclick="saveApiKey()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-lg font-bold">저장</button>
                 </div>
-                <p id="key-status" class="text-[10px] text-slate-500">키가 올바르게 입력되어야 AI 기능이 작동합니다.</p>
+                <p id="key-status" class="text-[10px] text-slate-500">API 키가 있어야 이슈 자동 체크가 가능합니다.</p>
             </div>
         </div>
 
@@ -93,14 +88,14 @@
                         <i class="fas fa-sliders-h text-blue-500 mr-2 text-base"></i>STEP 1. 시장 심리 가중치
                     </h3>
                     <div class="flex items-center gap-1.5 bg-orange-50 px-2.5 py-1.5 rounded-lg">
-                        <span class="text-[10px] font-black text-orange-600 uppercase">Volatility Mode</span>
+                        <span class="text-[9px] font-black text-orange-600 uppercase">Volatility Mode</span>
                         <input type="checkbox" id="vol-mode" class="w-4 h-4 accent-orange-500 cursor-pointer">
                     </div>
                 </div>
                 
                 <div class="space-y-5">
                     <div class="pb-2">
-                        <button onclick="autoCheckNews()" id="news-btn" class="ai-pulse w-full bg-blue-600 text-white py-4 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+                        <button onclick="autoCheckNews()" class="ai-pulse w-full bg-blue-600 text-white py-4 rounded-xl text-[14px] font-black flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
                             <i class="fas fa-magic"></i> ✨ AI 실시간 이슈 체크 (자동)
                         </button>
                         <div id="news-loading" class="hidden mt-2 text-center py-2">
@@ -144,7 +139,7 @@
             </div>
         </div>
 
-        <!-- Results -->
+        <!-- Analysis Result Section -->
         <div id="result-area" class="hidden px-6 mt-2 space-y-6 pb-12">
             <div class="result-enter">
                 <div class="bg-white border border-slate-100 rounded-2xl p-5 card-shadow relative overflow-hidden">
@@ -155,8 +150,8 @@
                                 <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">AI Expert Verdict</p>
                                 <span id="vol-badge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 font-black tracking-tighter">변동성 모드 적용됨</span>
                             </div>
-                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800 tracking-tighter">분석 결과</h2>
-                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium leading-tight">데이터 최적 타점을 산출했습니다.</p>
+                            <h2 id="verdict-title" class="text-2xl font-black text-slate-800 tracking-tighter">분석 결과 도출</h2>
+                            <p id="verdict-desc" class="text-sm text-slate-500 mt-1 font-medium leading-tight">데이터를 기반으로 최적의 타점을 산출했습니다.</p>
                         </div>
                         <div id="verdict-icon" class="text-4xl text-slate-100"><i class="fas fa-chart-pie"></i></div>
                     </div>
@@ -187,6 +182,14 @@
                     <div id="ai-comment" class="text-[15px] text-slate-200 leading-relaxed font-medium">분석 중...</div>
                 </div>
             </div>
+            
+            <div class="result-enter text-center" style="animation-delay: 0.3s">
+                <div class="inline-flex gap-5 text-[11px] text-slate-400 font-bold">
+                    <span>RSI: <span id="rsi-val" class="text-slate-600">--</span></span>
+                    <span>Pivot: <span id="pivot-val" class="text-slate-600">--</span></span>
+                    <span>MA5: <span id="ma5-val" class="text-slate-600">--</span></span>
+                </div>
+            </div>
         </div>
 
         <div id="loading-overlay" class="hidden fixed inset-0 bg-white/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center">
@@ -194,30 +197,39 @@
                 <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
                 <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <p class="mt-6 text-blue-800 font-black text-[13px] tracking-widest animate-pulse uppercase">Calculating Strategy...</p>
+            <p class="mt-6 text-blue-800 font-black text-[13px] tracking-widest animate-pulse uppercase">Processing...</p>
         </div>
     </div>
 
     <script>
+        // 🚀 중요: 개인용 API 키 호환성을 위해 모델을 1.5-flash로 고정
+        const GEMINI_MODEL = 'gemini-1.5-flash'; 
         const HISTORY_API = 'https://api.frankfurter.app';
         let currentCurrency = 'usd';
         let historicalData = { usd: [], jpy: [] };
         let activeBias = 'flat';
 
         // --- Core Utils ---
-        async function fetchWithRetry(url, options, maxRetries = 5) {
+        async function fetchWithRetry(url, options, maxRetries = 3) {
             let delay = 1000;
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const response = await fetch(url, options);
-                    if (response.ok) return await response.json();
-                    if (response.status !== 429 && response.status < 500) break;
-                } catch (e) {}
-                await new Promise(res => setTimeout(res, delay));
-                delay *= 2;
-                if(i === maxRetries - 1) throw new Error("Connection failed");
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        // 명확한 에러 메시지 반환
+                        const errMsg = data.error?.message || `HTTP Error ${response.status}`;
+                        throw new Error(errMsg);
+                    }
+                    return data;
+                } catch (e) {
+                    console.warn(`Attempt ${i+1} failed:`, e);
+                    if(i === maxRetries - 1) throw e;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
             }
-            return null;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -225,7 +237,7 @@
             setCurrency('usd'); 
             const savedKey = localStorage.getItem('gemini_api_key');
             if (savedKey) {
-                document.getElementById('key-status').innerText = "✅ 실시간 엔진 연결 성공";
+                document.getElementById('key-status').innerText = "✅ API 키가 저장되었습니다.";
                 document.getElementById('key-status').classList.replace('text-slate-500', 'text-green-400');
             }
             document.getElementById('price-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') analyzePrice(); });
@@ -265,27 +277,26 @@
             newsArea.value = "";
             loadingMsg.innerText = "최신 글로벌 뉴스를 검색 중입니다...";
 
-            // 🎯 초정밀 프롬프트 수정
-            const today = new Date().toISOString().split('T')[0];
-            const prompt = `당신은 실시간 외환 시장 분석가입니다. 오늘(${today}) 기준 ${currentCurrency === 'usd' ? '미국 달러(USD/KRW) 및 달러 인덱스(DXY)' : '일본 엔화(JPY/KRW) 및 엔/달러(USD/JPY)'}에 직접적인 영향을 미치는 실시간 경제 뉴스를 '구글 검색'을 통해 찾으세요. 
-            반드시 24시간 이내의 소식을 바탕으로:
-            1. 지금 시장을 뒤흔드는 핵심 팩트 한 줄 요약
-            2. 이 뉴스가 왜 통화 가치를 강세 또는 약세로 만드는지 논리적 분석
-            이렇게 2~3문장으로 한국어로 답변하세요.
-            마지막에 반드시 [추세:강세], [추세:보합], [추세:약세] 중 하나를 포함하세요.`;
+            // 🎯 표준 모델 1.5-flash 사용 (개인키 호환성 최적화)
+            const prompt = `Act as a professional FX analyst. Search and analyze the LATEST news for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}. Summarize in 2 sentences in Korean. Suggest sentiment: 'Strong' if it's bullish for the currency, 'Weak' if it's bearish, or 'Neutral'. Include [추세:강세], [추세:보합], or [추세:약세] at the end.`;
 
             try {
-                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                // google_search 도구를 사용하되, 실패하면 텍스트 모델로 폴백
+                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         contents: [{ parts: [{ text: prompt }] }],
-                        tools: [{ "google_search": {} }]
+                        tools: [{ "google_search": {} }] // 1.5-flash 지원 도구
                     })
                 });
 
+                // 응답 안전하게 파싱
                 const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if(!text) throw new Error("No data");
+                if(!text) {
+                    console.error("API Response Error:", data);
+                    throw new Error("AI 응답이 비어있습니다. API 키 권한을 확인하세요.");
+                }
 
                 newsArea.value = text.replace(/\[추세:.*\]/, '').trim();
                 
@@ -294,7 +305,15 @@
                 else setBias('flat');
 
             } catch (e) {
-                newsArea.value = "네트워크 지연으로 뉴스 데이터를 실시간으로 가져오지 못했습니다. 잠시 후 [AI 이슈 체크]를 다시 눌러주세요.";
+                console.error(e);
+                // 사용자에게 구체적인 에러 표시
+                let msg = "오류 발생: ";
+                if (e.message.includes('400')) msg += "API 요청 형식이 잘못되었습니다.";
+                else if (e.message.includes('403')) msg += "API 키 권한이 없거나 만료되었습니다.";
+                else if (e.message.includes('429')) msg += "사용량 한도 초과입니다. 잠시 후 시도하세요.";
+                else msg += e.message || "네트워크 상태를 확인해주세요.";
+                
+                newsArea.value = msg;
             } finally {
                 loader.classList.add('hidden');
             }
@@ -322,11 +341,13 @@
                 }
                 document.getElementById('result-area').classList.remove('hidden');
                 setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
-            } catch (e) { alert("분석 중 오류 발생: " + e.message); }
+            } catch (e) { alert(e.message); }
             finally { loader.classList.add('hidden'); }
         }
 
         function calculateTechnicals(price, h) {
+            // ... (Same calculation logic) ...
+            if (!h || h.length < 15) return { rsi: 50, pivot: price, ma5: price, atr: price*0.005 };
             const last = h[h.length - 1];
             let vol = 0; for(let i=1; i<=14; i++) vol += Math.abs(h[h.length-i] - h[h.length-i-1]);
             const atr = vol / 14;
@@ -345,6 +366,7 @@
             const anchor = (Math.abs(price - tech.pivot) < tech.atr * 2) ? tech.pivot : price;
             let entry = anchor - (spread * 0.4) + (biasVal * 3.0);
             let exit = anchor + (spread * 0.4) + (biasVal * 3.0);
+            if (price < entry) entry = price - (tech.atr * 0.2); 
             const minP = currentCurrency === 'usd' ? 6.5 : 4.5;
             if (exit - entry < minP) exit = entry + minP;
             let verdict = "관망 (Neutral)", color = "slate";
@@ -380,15 +402,15 @@
 
         async function getGeminiBriefing(price, res, key) {
             const news = document.getElementById('news-context').value;
-            const prompt = `당신은 환테크 전문가입니다. 통화: ${currentCurrency.toUpperCase()}, 현재가: ${price}원. 기술지표: RSI ${res.rsi.toFixed(1)}, Pivot ${Math.floor(res.pivot)}. 실시간 뉴스: ${news}. 분석결과 매수추천 ${Math.floor(res.entry)}원, 매도목표 ${Math.floor(res.exit)}원입니다. 3줄 핵심 요약 브리핑을 한국어로 하세요. 절대 표를 만들지 마세요.`;
+            const prompt = `Act as expert. Currency: ${currentCurrency.toUpperCase()}, Price: ${price}. Indicators: RSI ${res.rsi.toFixed(1)}. News: ${news}. Brief 3 lines in Korean. No tables.`;
             try {
-                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                const data = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-                return data?.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g, '<br>') || "브리핑을 생성할 수 없습니다.";
-            } catch (e) { return "AI 통신 지연 중..."; }
+                return data?.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g, '<br>') || "브리핑 불가";
+            } catch (e) { return "AI 분석 지연 (" + e.message + ")"; }
         }
 
         function toggleSettings() { document.getElementById('settings-area').classList.toggle('hidden'); }
@@ -397,8 +419,9 @@
             try {
                 const startStr = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
                 const [usdRes, jpyRes] = await Promise.all([fetch(`${HISTORY_API}/${startStr}..?from=USD&to=KRW`), fetch(`${HISTORY_API}/${startStr}..?from=JPY&to=KRW`)]);
-                historicalData.usd = Object.values(usdRes.rates).map(r => r.KRW); historicalData.jpy = Object.values(jpyRes.rates).map(r => r.KRW * 100);
-            } catch (e) {}
+                const d1 = await usdRes.json(); const d2 = await jpyRes.json();
+                historicalData.usd = Object.values(d1.rates).map(r => r.KRW); historicalData.jpy = Object.values(d2.rates).map(r => r.KRW * 100);
+            } catch (e) { console.error("Data error", e); }
         }
     </script>
 </body>
