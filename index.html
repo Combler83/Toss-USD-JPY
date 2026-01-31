@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3b82f6">
-    <title>토스 환율 스캘퍼 Pro+ (Model Fix)</title>
+    <title>토스 환율 스캘퍼 Pro+ (Final Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -58,6 +58,7 @@
                 </button>
             </div>
 
+            <!-- Currency Selector -->
             <div class="flex p-1 bg-blue-900/50 rounded-xl backdrop-blur-sm border border-white/10">
                 <button onclick="setCurrency('usd')" id="btn-usd" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all bg-white text-blue-600 shadow-sm">
                     미국 달러 (USD)
@@ -68,7 +69,7 @@
             </div>
         </div>
 
-        <!-- Settings -->
+        <!-- ⚙️ Settings Section -->
         <div id="settings-area" class="hidden px-6 -mt-6 relative z-30 mb-4 result-enter">
             <div class="bg-slate-800 text-white rounded-2xl p-5 shadow-2xl border border-slate-700">
                 <h3 class="text-xs font-bold text-slate-400 mb-2 flex items-center"><i class="fas fa-key mr-2 text-yellow-400"></i>Gemini API Key</h3>
@@ -80,7 +81,7 @@
             </div>
         </div>
 
-        <!-- Step 1: AI & Sentiment -->
+        <!-- 🔥 Step 1: Fundamental Sentiment -->
         <div class="px-6 -mt-6 relative z-20 mb-6" id="main-content">
             <div class="bg-white rounded-2xl p-5 card-shadow border border-slate-100">
                 <div class="flex justify-between items-center mb-4">
@@ -141,6 +142,7 @@
 
         <!-- Analysis Result Section -->
         <div id="result-area" class="hidden px-6 mt-2 space-y-6 pb-12">
+            <!-- Verdict -->
             <div class="result-enter">
                 <div class="bg-white border border-slate-100 rounded-2xl p-5 card-shadow relative overflow-hidden">
                     <div id="verdict-bg" class="absolute top-0 left-0 w-2 h-full bg-slate-400"></div>
@@ -202,39 +204,44 @@
     </div>
 
     <script>
-        // 🚀 모델명 수정: 1.5-flash-002 (안정화 버전)
-        const GEMINI_MODELS = ['gemini-1.5-flash-002', 'gemini-1.5-flash-8b', 'gemini-1.5-pro-002'];
+        // 🚀 모델명 수정: 가장 표준적인 모델 사용 (검색 도구 호환성 확보)
+        const GEMINI_MODEL = 'gemini-1.5-flash'; 
         const HISTORY_API = 'https://api.frankfurter.app';
         let currentCurrency = 'usd';
         let historicalData = { usd: [], jpy: [] };
         let activeBias = 'flat';
 
-        // --- Core Utils with Model Fallback ---
-        async function fetchWithRetry(baseUrl, options, key) {
-            // Try models in order
-            for (const model of GEMINI_MODELS) {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+        // --- Robust AI Fetcher ---
+        async function fetchAI(prompt, useSearch = false, key) {
+            // 1. First attempt: With Search (if requested)
+            if (useSearch) {
                 try {
-                    const response = await fetch(url, options);
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            contents: [{ parts: [{ text: prompt }] }],
+                            tools: [{ "google_search": {} }] 
+                        })
+                    });
                     const data = await response.json();
-                    
-                    if (response.ok) return data;
-                    
-                    // If 404 (Model not found), try next model immediately
-                    if (response.status === 404) {
-                        console.warn(`Model ${model} not found, trying next...`);
-                        continue;
-                    }
-                    
-                    // Other errors, throw to show user
-                    const errMsg = data.error?.message || `HTTP Error ${response.status}`;
-                    throw new Error(errMsg);
+                    if (data.error) throw new Error(data.error.message);
+                    return data?.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) {
-                    if (e.message.includes("404")) continue; // Try next if 404
-                    throw e; // Stop for other errors
+                    console.warn("Search tool failed, falling back to text-only mode...", e);
+                    // Fallback to next step
                 }
             }
-            throw new Error("모든 AI 모델 연결에 실패했습니다. 키 권한을 확인하세요.");
+
+            // 2. Fallback: Text Only (Robust mode)
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            return data?.candidates?.[0]?.content?.parts?.[0]?.text;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -276,30 +283,16 @@
 
             const loader = document.getElementById('news-loading');
             const newsArea = document.getElementById('news-context');
-            const loadingMsg = document.getElementById('loading-msg');
-            
             loader.classList.remove('hidden');
             newsArea.value = "";
-            loadingMsg.innerText = "최신 글로벌 뉴스를 검색 중입니다...";
 
-            const prompt = `Act as a professional FX analyst. Search and analyze the LATEST news for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}. Summarize in 2 sentences in Korean. Suggest sentiment: 'Strong' if it's bullish for the currency, 'Weak' if it's bearish, or 'Neutral'. Include [추세:강세], [추세:보합], or [추세:약세] at the end.`;
+            const prompt = `Act as a professional FX analyst. Check the latest trend for ${currentCurrency === 'usd' ? 'USD/KRW and Dollar Index' : 'JPY/KRW and USD/JPY'}. Summarize in 2 sentences in Korean. Include [추세:강세], [추세:보합], or [추세:약세] at the end.`;
 
             try {
-                // Fetch with retry logic for model fallback
-                const data = await fetchWithRetry(null, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }],
-                        tools: [{ "google_search": {} }]
-                    })
-                }, key);
-
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if(!text) {
-                    console.error("API Response Error:", data);
-                    throw new Error("AI 응답 없음. 다시 시도해주세요.");
-                }
+                // Try with search, fallback to text if fails
+                const text = await fetchAI(prompt, true, key);
+                
+                if(!text) throw new Error("AI 응답 없음");
 
                 newsArea.value = text.replace(/\[추세:.*\]/, '').trim();
                 
@@ -309,7 +302,7 @@
 
             } catch (e) {
                 console.error(e);
-                newsArea.value = `오류: ${e.message}`;
+                newsArea.value = "네트워크/모델 오류: 수동으로 추세를 선택해주세요.";
             } finally {
                 loader.classList.add('hidden');
             }
@@ -397,15 +390,11 @@
 
         async function getGeminiBriefing(price, res, key) {
             const news = document.getElementById('news-context').value;
-            const prompt = `Act as expert. Currency: ${currentCurrency.toUpperCase()}, Price: ${price}. Indicators: RSI ${res.rsi.toFixed(1)}. News: ${news}. Brief 3 lines in Korean. No tables.`;
+            const prompt = `Act as expert. Currency: ${currentCurrency.toUpperCase()}, Price: ${price}. Indicators: RSI ${res.rsi.toFixed(1)}, Pivot ${Math.floor(res.pivot)}. News: ${news}. Brief 3 lines in Korean. No tables.`;
             try {
-                // Reuse retry logic for briefing too
-                const data = await fetchWithRetry(null, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                }, key);
-                return data?.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/\n/g, '<br>') || "브리핑 불가";
+                // Use robust fetcher without search tool for safety
+                const text = await fetchAI(prompt, false, key);
+                return text?.replace(/\n/g, '<br>') || "브리핑 불가";
             } catch (e) { return "AI 분석 지연 (" + e.message + ")"; }
         }
 
